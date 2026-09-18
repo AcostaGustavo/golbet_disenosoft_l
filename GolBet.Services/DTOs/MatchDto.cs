@@ -10,7 +10,7 @@ public class MatchDto
 {
     public int Id { get; set; }
 
-    public DateTime Date { get; set; }  // UTC; the view converts
+    public DateTime Date { get; set; }              // UTC; the view converts
     public MatchStatus Status { get; set; }
 
     // Flattened from Match.HomeTeam / Match.AwayTeam (AutoMapper convention)
@@ -26,4 +26,3 @@ public class MatchDto
     public decimal DrawOdds { get; set; }
     public decimal AwayOdds { get; set; }
 }
-
