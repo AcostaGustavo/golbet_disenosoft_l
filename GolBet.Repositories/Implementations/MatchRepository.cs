@@ -11,7 +11,8 @@ public class MatchRepository : GenericRepository<Match>, IMatchRepository
 {
     public MatchRepository(AppDbContext context) : base(context) { }
 
-    public async Task<IEnumerable<Match>> GetAllWithTeamsAsync(MatchStatus? status = null)
+    public async Task<IEnumerable<Match>> GetAllWithTeamsAsync(MatchStatus? status = null, string? search = null)
+
     {
         var query = _dbSet
             .Include(m => m.HomeTeam)
@@ -23,6 +24,14 @@ public class MatchRepository : GenericRepository<Match>, IMatchRepository
         if (status.HasValue)
             query = query.Where(m => m.Status == status.Value);
 
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchTerm = $"%{search.Trim()}%";
+            query = query.Where(m =>
+                EF.Functions.Like(m.HomeTeam.Name, searchTerm) ||
+                EF.Functions.Like(m.AwayTeam.Name, searchTerm));
+        }
+
         return await query.OrderBy(m => m.Date).ToListAsync();
     }
 
@@ -33,4 +42,5 @@ public class MatchRepository : GenericRepository<Match>, IMatchRepository
             .Include(m => m.Bets)
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.Id == id);
+
 }

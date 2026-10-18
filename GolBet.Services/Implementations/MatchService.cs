@@ -19,9 +19,10 @@ public class MatchService : IMatchService
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<MatchDto>> GetBoardAsync(MatchStatus? status = null)
+
+    public async Task<IEnumerable<MatchDto>> GetBoardAsync(MatchStatus? status = null,  string? search = null)
     {
-        var matches = await _matchRepository.GetAllWithTeamsAsync(status);
+        var matches = await _matchRepository.GetAllWithTeamsAsync(status,  search);
         return _mapper.Map<IEnumerable<MatchDto>>(matches);
     }
 
@@ -46,7 +47,7 @@ public class MatchService : IMatchService
         ValidateBusinessRules(dto);
 
         var match = _mapper.Map<Match>(dto);
-        match.Date = dto.Date.ToUtcFromColombia();   // local (form) -> UTC (DB)
+        match.Date = dto.Date.ToUtcFromColombia();   
         await _matchRepository.AddAsync(match);
     }
 
@@ -65,7 +66,6 @@ public class MatchService : IMatchService
     public async Task DeactivateAsync(int id)
         => await _matchRepository.DeactivateAsync(id);
 
-    // ---- Business rules (Guía, regla #1 y afines) ----
     private static void ValidateBusinessRules(MatchFormDto dto)
     {
         if (dto.HomeTeamId == dto.AwayTeamId)
