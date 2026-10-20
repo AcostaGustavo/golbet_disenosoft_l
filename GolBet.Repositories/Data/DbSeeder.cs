@@ -131,7 +131,7 @@ public static class DbSeeder
                 UserName = "admin@golbet.com",
                 Email = "admin@golbet.com",
                 FullName = "Administrador GolBet",
-                Balance = 0m,              // admins manage, they do not bet
+                Balance = 0m,              // admins manage, they do not Bet
                 EmailConfirmed = true
             };
 
