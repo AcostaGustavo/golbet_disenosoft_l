@@ -6,29 +6,32 @@ using GolBet.Repositories.Interfaces;
 using GolBet.Services.DTOs;
 using GolBet.Services.Helpers;
 using GolBet.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace GolBet.Services.Implementations;
+
 public class MatchService : IMatchService
 {
     private readonly IMatchRepository _matchRepository;
-    private readonly IBetRepository _betRepository; //-----
+    private readonly IBetRepository _betRepository;
     private readonly IMapper _mapper;
+    private readonly ILogger<MatchService> _logger;
 
-    public MatchService(IMatchRepository matchRepository,
-    IBetRepository betRepository,                    // ------
-    IMapper mapper)
-
+    public MatchService(
+        IMatchRepository matchRepository,
+        IBetRepository betRepository,
+        IMapper mapper,
+        ILogger<MatchService> logger)
     {
         _matchRepository = matchRepository;
-        _betRepository = betRepository;              //------
+        _betRepository = betRepository;
         _mapper = mapper;
-
+        _logger = logger;
     }
 
-
-    public async Task<IEnumerable<MatchDto>> GetBoardAsync(MatchStatus? status = null,  string? search = null)
+    public async Task<IEnumerable<MatchDto>> GetBoardAsync(MatchStatus? status = null, string? search = null)
     {
-        var matches = await _matchRepository.GetAllWithTeamsAsync(status,  search);
+        var matches = await _matchRepository.GetAllWithTeamsAsync(status, search);
         return _mapper.Map<IEnumerable<MatchDto>>(matches);
     }
 
@@ -53,7 +56,7 @@ public class MatchService : IMatchService
         ValidateBusinessRules(dto);
 
         var match = _mapper.Map<Match>(dto);
-        match.Date = dto.Date.ToUtcFromColombia();   
+        match.Date = dto.Date.ToUtcFromColombia();
         await _matchRepository.AddAsync(match);
     }
 
@@ -130,6 +133,12 @@ public class MatchService : IMatchService
         // 4. ONE save: the match, every bet and every balance — ONE transaction
         await _matchRepository.UpdateAsync(match);
 
+        _logger.LogInformation(
+            "Match {MatchId} closed {HomeGoals}-{AwayGoals}: " +
+            "{ResolvedBets} bets resolved, {WonBets} won, {TotalPaid} paid",
+            match.Id, dto.HomeGoals, dto.AwayGoals,
+            summary.ResolvedBets, summary.WonBets, summary.TotalPaid);
+
         return summary;
     }
 
@@ -137,7 +146,6 @@ public class MatchService : IMatchService
         => homeGoals > awayGoals ? BetPick.Home
          : homeGoals < awayGoals ? BetPick.Away
          : BetPick.Draw;
-
 
     private static void ValidateBusinessRules(MatchFormDto dto)
     {
@@ -149,5 +157,4 @@ public class MatchService : IMatchService
             throw new InvalidOperationException(
                 "La fecha del partido debe ser futura.");
     }
-
 }
